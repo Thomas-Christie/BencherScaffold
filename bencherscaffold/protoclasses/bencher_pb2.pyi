@@ -51,12 +51,14 @@ class Benchmark(_message.Message):
     def __init__(self, name: _Optional[str] = ..., type: _Optional[_Union[BenchmarkType, str]] = ..., description: _Optional[str] = ...) -> None: ...
 
 class BenchmarkRequest(_message.Message):
-    __slots__ = ("benchmark", "point")
+    __slots__ = ("benchmark", "point", "random_seed")
     BENCHMARK_FIELD_NUMBER: _ClassVar[int]
     POINT_FIELD_NUMBER: _ClassVar[int]
+    RANDOM_SEED_FIELD_NUMBER: _ClassVar[int]
     benchmark: Benchmark
     point: Point
-    def __init__(self, benchmark: _Optional[_Union[Benchmark, _Mapping]] = ..., point: _Optional[_Union[Point, _Mapping]] = ...) -> None: ...
+    random_seed: int
+    def __init__(self, benchmark: _Optional[_Union[Benchmark, _Mapping]] = ..., point: _Optional[_Union[Point, _Mapping]] = ..., random_seed: _Optional[int] = ...) -> None: ...
 
 class Point(_message.Message):
     __slots__ = ("values",)

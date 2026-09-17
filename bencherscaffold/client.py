@@ -36,7 +36,8 @@ class BencherClient:
     def evaluate_point(
             self,
             benchmark_name: str,
-            point: Sequence[Value]
+            point: Sequence[Value],
+            random_seed: int | None = None,
     ) -> float:
         """
         Evaluates a point in the benchmark space.
@@ -48,6 +49,9 @@ class BencherClient:
         Args:
             benchmark_name: The name of the benchmark to evaluate.
             point:  A sequence of floats representing the point in the benchmark space to evaluate.
+            random_seed: An optional seed to use for any stochasticity in the benchmark 
+                evaluation. If omitted, the benchmark is free to evaluate 
+                non-deterministically.
 
         Returns:
             The evaluated value of the point in the benchmark space.
@@ -75,7 +79,7 @@ class BencherClient:
             point=Point(
                 values=point,
             ),
-
+            random_seed=random_seed,
         )
         for n_retry in range(self.max_retries):
             try:
