@@ -42,7 +42,26 @@ message Point {
   repeated Value values = 1;
 }
 
-// an evaluation result just contains a double (for now)
+enum ConstraintType {
+  INEQUALITY = 0;
+  EQUALITY = 1;
+}
+
+message Constraint {
+  string name = 1;
+  ConstraintType type = 2;
+  double value = 3;
+}
+
+message ConstrainedEvaluationResult {
+  double objective = 1;
+  repeated Constraint constraints = 2;
+}
+
+// an evaluation result is either a plain value, or an objective plus constraints for constrained BO problems
 message EvaluationResult {
-  double value = 1;
+  oneof result {
+    double value = 1;
+    ConstrainedEvaluationResult constrained_value = 2;
+  }
 }

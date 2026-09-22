@@ -21,6 +21,11 @@ class ValueType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     BINARY: _ClassVar[ValueType]
     INTEGER: _ClassVar[ValueType]
     CATEGORICAL: _ClassVar[ValueType]
+
+class ConstraintType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    INEQUALITY: _ClassVar[ConstraintType]
+    EQUALITY: _ClassVar[ConstraintType]
 PURELY_CONTINUOUS: BenchmarkType
 PURELY_BINARY: BenchmarkType
 PURELY_CATEGORICAL: BenchmarkType
@@ -31,6 +36,8 @@ CONTINUOUS: ValueType
 BINARY: ValueType
 INTEGER: ValueType
 CATEGORICAL: ValueType
+INEQUALITY: ConstraintType
+EQUALITY: ConstraintType
 
 class Value(_message.Message):
     __slots__ = ("type", "value")
@@ -64,8 +71,28 @@ class Point(_message.Message):
     values: _containers.RepeatedCompositeFieldContainer[Value]
     def __init__(self, values: _Optional[_Iterable[_Union[Value, _Mapping]]] = ...) -> None: ...
 
-class EvaluationResult(_message.Message):
-    __slots__ = ("value",)
+class Constraint(_message.Message):
+    __slots__ = ("name", "type", "value")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
     VALUE_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    type: ConstraintType
     value: float
-    def __init__(self, value: _Optional[float] = ...) -> None: ...
+    def __init__(self, name: _Optional[str] = ..., type: _Optional[_Union[ConstraintType, str]] = ..., value: _Optional[float] = ...) -> None: ...
+
+class ConstrainedEvaluationResult(_message.Message):
+    __slots__ = ("objective", "constraints")
+    OBJECTIVE_FIELD_NUMBER: _ClassVar[int]
+    CONSTRAINTS_FIELD_NUMBER: _ClassVar[int]
+    objective: float
+    constraints: _containers.RepeatedCompositeFieldContainer[Constraint]
+    def __init__(self, objective: _Optional[float] = ..., constraints: _Optional[_Iterable[_Union[Constraint, _Mapping]]] = ...) -> None: ...
+
+class EvaluationResult(_message.Message):
+    __slots__ = ("value", "constrained_value")
+    VALUE_FIELD_NUMBER: _ClassVar[int]
+    CONSTRAINED_VALUE_FIELD_NUMBER: _ClassVar[int]
+    value: float
+    constrained_value: ConstrainedEvaluationResult
+    def __init__(self, value: _Optional[float] = ..., constrained_value: _Optional[_Union[ConstrainedEvaluationResult, _Mapping]] = ...) -> None: ...
