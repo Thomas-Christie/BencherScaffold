@@ -1,6 +1,6 @@
 import time
 from collections.abc import Sequence
-from typing import Union
+from typing import Union, Sequence
 
 import grpc
 
