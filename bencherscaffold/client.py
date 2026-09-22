@@ -36,7 +36,7 @@ class BencherClient:
     def evaluate_point(
             self,
             benchmark_name: str,
-            point: Sequence[Value]
+            point: Sequence[Value],
             random_seed: Optional[int] = None,
     ) -> EvaluationResult:
         """
