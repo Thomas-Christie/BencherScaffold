@@ -5,10 +5,14 @@ import pytest
 
 from bencherscaffold.protoclasses.bencher_pb2 import (
     BenchmarkType,
+    Constraint,
+    ConstraintType,
     EvaluationResult,
+    ObjectiveValue,
     Value,
     ValueType,
 )
+
 
 
 def _point(*types):
@@ -87,25 +91,64 @@ class TestRequestContents:
         assert request.benchmark.name == "my-benchmark"
         assert list(request.point.values) == list(point)
 
-    def test_returns_the_response_value(self, make_client):
-        client = make_client(script=[EvaluationResult(value=1.25)])
-        assert client.evaluate_point("bench", _point(ValueType.CONTINUOUS)) == 1.25
+    def test_returns_the_whole_evaluation_result(self, make_client, make_result):
+        """evaluate_point hands back the message, not a scalar."""
+        client = make_client(script=[make_result(1.25)])
+        result = client.evaluate_point("bench", _point(ValueType.CONTINUOUS))
+        assert isinstance(result, EvaluationResult)
+        assert result.objectives[0].value == 1.25
+
+    def test_multiple_objectives_are_preserved(self, make_client):
+        """The point of the flat EvaluationResult: MOBO results survive intact."""
+        client = make_client(script=[
+            EvaluationResult(objectives=[
+                ObjectiveValue(name="f1", value=0.3),
+                ObjectiveValue(name="f2", value=1.7),
+            ])
+        ])
+        result = client.evaluate_point("bench", _point(ValueType.CONTINUOUS))
+        assert [(o.name, o.value) for o in result.objectives] == [("f1", 0.3), ("f2", 1.7)]
+
+    def test_constraints_are_preserved(self, make_client):
+        client = make_client(script=[
+            EvaluationResult(
+                objectives=[ObjectiveValue(name="f1", value=0.5)],
+                constraints=[
+                    Constraint(name="c1", type=ConstraintType.INEQUALITY, value=-0.2),
+                    Constraint(name="c2", type=ConstraintType.EQUALITY, value=0.0),
+                ],
+            )
+        ])
+        result = client.evaluate_point("bench", _point(ValueType.CONTINUOUS))
+        assert [(c.name, c.type, c.value) for c in result.constraints] == [
+            ("c1", ConstraintType.INEQUALITY, -0.2),
+            ("c2", ConstraintType.EQUALITY, 0.0),
+        ]
+
+    def test_result_without_objectives_is_passed_through(self, make_client):
+        """A benchmark reporting nothing is the caller's problem, not the client's."""
+        client = make_client(script=[EvaluationResult()])
+        result = client.evaluate_point("bench", _point(ValueType.CONTINUOUS))
+        assert list(result.objectives) == []
+        assert list(result.constraints) == []
 
 
 class TestRetryLoop:
-    def test_success_on_first_try_does_not_sleep(self, make_client, sleeps):
-        client = make_client(script=[EvaluationResult(value=3.0)], max_retries=5)
-        assert client.evaluate_point("bench", _point(ValueType.CONTINUOUS)) == 3.0
+    def test_success_on_first_try_does_not_sleep(self, make_client, sleeps, make_result):
+        client = make_client(script=[make_result(3.0)], max_retries=5)
+        result = client.evaluate_point("bench", _point(ValueType.CONTINUOUS))
+        assert result.objectives[0].value == 3.0
         assert client.stub.calls == 1
         assert sleeps == []
 
-    def test_retries_until_success(self, make_client, sleeps):
+    def test_retries_until_success(self, make_client, sleeps, make_result):
         client = make_client(
-            script=[grpc.RpcError(), grpc.RpcError(), EvaluationResult(value=7.0)],
+            script=[grpc.RpcError(), grpc.RpcError(), make_result(7.0)],
             max_retries=5,
             wait_time=2,
         )
-        assert client.evaluate_point("bench", _point(ValueType.CONTINUOUS)) == 7.0
+        result = client.evaluate_point("bench", _point(ValueType.CONTINUOUS))
+        assert result.objectives[0].value == 7.0
         assert client.stub.calls == 3
         assert sleeps == [2, 2]
 

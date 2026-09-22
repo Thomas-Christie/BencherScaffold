@@ -11,7 +11,7 @@ import pytest
 import bencherscaffold.client
 from bencherscaffold.client import BencherClient
 from bencherscaffold.protoclasses import bencher_pb2_grpc
-from bencherscaffold.protoclasses.bencher_pb2 import EvaluationResult
+from bencherscaffold.protoclasses.bencher_pb2 import EvaluationResult, ObjectiveValue
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,12 +38,28 @@ class RecordingStub:
         return item
 
 
+def single_objective(value, name="f0"):
+    """The common case: an EvaluationResult carrying exactly one objective."""
+    return EvaluationResult(objectives=[ObjectiveValue(name=name, value=value)])
+
+
+@pytest.fixture
+def make_result():
+    """Builds a single-objective EvaluationResult -- the common case.
+
+    Exposed as a fixture rather than imported from this module: the repo root
+    conftest.py shadows this one on sys.path, so `from conftest import ...`
+    resolves to the wrong file outside pytest's own import ordering.
+    """
+    return single_objective
+
+
 @pytest.fixture
 def make_client():
     """Builds real BencherClients (real channel, real grpc_target) with a fake stub."""
     created = []
 
-    def _make(script=(EvaluationResult(value=0.0),), **kwargs):
+    def _make(script=(single_objective(0.0),), **kwargs):
         kwargs.setdefault("wait_time", 0)
         client = BencherClient(**kwargs)
         client.stub = RecordingStub(script)
@@ -66,18 +82,32 @@ def sleeps(monkeypatch):
 
 
 class EchoBencher(bencher_pb2_grpc.BencherServicer):
-    """Real servicer: records requests, optionally fails the first N calls."""
+    """Real servicer: records requests, optionally fails the first N calls.
 
-    def __init__(self, value=42.0, fail_times=0):
+    Reports ``n_objectives`` objectives named f0, f1, ... so multi-objective
+    responses can be exercised over the wire, plus whatever constraints it was
+    configured with.
+    """
+
+    def __init__(self, value=42.0, fail_times=0, n_objectives=1, constraints=()):
         self.requests = []
         self.value = value
         self.fail_times = fail_times
+        self.n_objectives = n_objectives
+        self.constraints = list(constraints)
 
     def evaluate_point(self, request, context):
         self.requests.append(request)
         if len(self.requests) <= self.fail_times:
             context.abort(grpc.StatusCode.UNAVAILABLE, "not ready yet")
-        return EvaluationResult(value=self.value + len(request.point.values))
+        base = self.value + len(request.point.values)
+        return EvaluationResult(
+            objectives=[
+                ObjectiveValue(name="f{}".format(i), value=base + i)
+                for i in range(self.n_objectives)
+            ],
+            constraints=self.constraints,
+        )
 
 
 @contextlib.contextmanager

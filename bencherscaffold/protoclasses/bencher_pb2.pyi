@@ -81,18 +81,18 @@ class Constraint(_message.Message):
     value: float
     def __init__(self, name: _Optional[str] = ..., type: _Optional[_Union[ConstraintType, str]] = ..., value: _Optional[float] = ...) -> None: ...
 
-class ConstrainedEvaluationResult(_message.Message):
-    __slots__ = ("objective", "constraints")
-    OBJECTIVE_FIELD_NUMBER: _ClassVar[int]
-    CONSTRAINTS_FIELD_NUMBER: _ClassVar[int]
-    objective: float
-    constraints: _containers.RepeatedCompositeFieldContainer[Constraint]
-    def __init__(self, objective: _Optional[float] = ..., constraints: _Optional[_Iterable[_Union[Constraint, _Mapping]]] = ...) -> None: ...
+class ObjectiveValue(_message.Message):
+    __slots__ = ("name", "value")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    VALUE_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    value: float
+    def __init__(self, name: _Optional[str] = ..., value: _Optional[float] = ...) -> None: ...
 
 class EvaluationResult(_message.Message):
-    __slots__ = ("value", "constrained_value")
-    VALUE_FIELD_NUMBER: _ClassVar[int]
-    CONSTRAINED_VALUE_FIELD_NUMBER: _ClassVar[int]
-    value: float
-    constrained_value: ConstrainedEvaluationResult
-    def __init__(self, value: _Optional[float] = ..., constrained_value: _Optional[_Union[ConstrainedEvaluationResult, _Mapping]] = ...) -> None: ...
+    __slots__ = ("objectives", "constraints")
+    OBJECTIVES_FIELD_NUMBER: _ClassVar[int]
+    CONSTRAINTS_FIELD_NUMBER: _ClassVar[int]
+    objectives: _containers.RepeatedCompositeFieldContainer[ObjectiveValue]
+    constraints: _containers.RepeatedCompositeFieldContainer[Constraint]
+    def __init__(self, objectives: _Optional[_Iterable[_Union[ObjectiveValue, _Mapping]]] = ..., constraints: _Optional[_Iterable[_Union[Constraint, _Mapping]]] = ...) -> None: ...

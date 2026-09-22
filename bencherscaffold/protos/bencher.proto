@@ -53,15 +53,15 @@ message Constraint {
   double value = 3;
 }
 
-message ConstrainedEvaluationResult {
-  double objective = 1;
-  repeated Constraint constraints = 2;
+// a named objective value
+message ObjectiveValue {
+  string name = 1;
+  double value = 2;
 }
 
-// an evaluation result is either a plain value, or an objective plus constraints for constrained BO problems
+// an evaluation result carries one entry per objective, which is what allows
+// multi-objective optimization, plus one entry per constraint
 message EvaluationResult {
-  oneof result {
-    double value = 1;
-    ConstrainedEvaluationResult constrained_value = 2;
-  }
+  repeated ObjectiveValue objectives = 1;
+  repeated Constraint constraints = 2;
 }

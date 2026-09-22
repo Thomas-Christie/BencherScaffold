@@ -9,7 +9,13 @@ import grpc
 import pytest
 
 from bencherscaffold.client import BencherClient
-from bencherscaffold.protoclasses.bencher_pb2 import BenchmarkType, Value, ValueType
+from bencherscaffold.protoclasses.bencher_pb2 import (
+    BenchmarkType,
+    Constraint,
+    ConstraintType,
+    Value,
+    ValueType,
+)
 
 
 def _client(address, port):
@@ -35,7 +41,7 @@ def test_roundtrip_over_tcp(tcp_server):
         finally:
             client.channel.close()
 
-    assert result == 44.0  # 42.0 + two values
+    assert result.objectives[0].value == 44.0  # 42.0 + two values
     assert len(servicer.requests) == 1
     request = servicer.requests[0]
     assert request.benchmark.name == "live-bench"
@@ -67,7 +73,7 @@ def test_real_retry_recovers_from_server_errors(tcp_server):
         finally:
             client.channel.close()
 
-    assert result == 44.0
+    assert result.objectives[0].value == 44.0
     assert len(servicer.requests) == 3
 
 
@@ -92,5 +98,40 @@ def test_roundtrip_over_unix_socket(unix_server):
         finally:
             client.channel.close()
 
-    assert result == 44.0
+    assert result.objectives[0].value == 44.0
     assert servicer.requests[0].benchmark.name == "unix-bench"
+
+
+def test_multiple_objectives_survive_the_wire(tcp_server):
+    """The change that motivated the flat EvaluationResult: real MOBO responses."""
+    with tcp_server(n_objectives=3) as (_servicer, port):
+        client = _client("127.0.0.1", port)
+        try:
+            result = client.evaluate_point("mobo-bench", _point())
+        finally:
+            client.channel.close()
+
+    assert [(o.name, o.value) for o in result.objectives] == [
+        ("f0", 44.0),
+        ("f1", 45.0),
+        ("f2", 46.0),
+    ]
+
+
+def test_constraints_survive_the_wire(tcp_server):
+    constraints = [
+        Constraint(name="c1", type=ConstraintType.INEQUALITY, value=-0.5),
+        Constraint(name="c2", type=ConstraintType.EQUALITY, value=0.0),
+    ]
+    with tcp_server(constraints=constraints) as (_servicer, port):
+        client = _client("127.0.0.1", port)
+        try:
+            result = client.evaluate_point("constrained-bench", _point())
+        finally:
+            client.channel.close()
+
+    assert [(c.name, c.type, c.value) for c in result.constraints] == [
+        ("c1", ConstraintType.INEQUALITY, -0.5),
+        ("c2", ConstraintType.EQUALITY, 0.0),
+    ]
+    assert result.objectives[0].value == 44.0
