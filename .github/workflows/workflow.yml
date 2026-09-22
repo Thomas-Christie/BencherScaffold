@@ -1,13 +1,92 @@
-name: Bump version
+name: CI
 
 on:
   push:
     branches:
       - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    # Pinned rather than ubuntu-latest: ubuntu-latest moves to 26.04, which has
+    # no Python 3.8 or 3.9 builds in actions/python-versions. 24.04 has 3.8-3.14.
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package and test dependencies
+        # Deliberately pip, not Poetry: current Poetry requires Python >= 3.10,
+        # so it cannot install on the 3.8 and 3.9 legs. pip picks a version of
+        # each test dependency appropriate to the interpreter via requires-python.
+        # The dev group in pyproject.toml stays the source of truth for local
+        # development and for the `tooling` job below.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          python -m pip install pytest pytest-timeout toml
+
+      - name: Run tests
+        run: pytest -m "not tooling"
+
+  tooling:
+    # Repo hygiene: proto freshness and packaging. Single interpreter, because
+    # these depend on the grpcio-tools and Poetry versions rather than on the
+    # library's supported range. 3.12 is the newest Python that grpcio-tools
+    # 1.62.x -- the toolchain family that produced the checked-in gencode --
+    # publishes wheels for.
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # setup-python must come first: snok/install-poetry installs Poetry with
+      # the interpreter on PATH.
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache the virtualenv
+        uses: actions/cache@v6
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-tooling-${{ hashFiles('poetry.lock') }}
+
+      - name: Check that the lock file matches pyproject.toml
+        run: poetry check --lock
+
+      - name: Install project
+        run: poetry install --with dev
+
+      - name: Run tooling tests
+        run: poetry run pytest -m tooling
+
+  publish:
+    needs: [test, tooling]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
 
     environment:
       name: pypi
@@ -18,10 +97,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -32,7 +111,6 @@ jobs:
         run: poetry install --with dev --no-root
 
       - name: Bump version and commit
-        # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         run: |
           poetry run python bump_version.py
           git config --local user.email "action@github.com"
@@ -41,16 +119,13 @@ jobs:
           git push
 
       - name: Build
-        #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         run: poetry build
 
       - name: Publish package distributions to PyPI
-        #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: Run update scaffold action in bencher repo
-        #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.BENCHER_TOKEN }}
           script: |
@@ -60,5 +135,3 @@ jobs:
               ref: 'main',
               workflow_id: 'update_scaffold_version.yml'
             });
-
-
