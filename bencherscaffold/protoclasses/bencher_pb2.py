@@ -11,9 +11,6 @@ from google.protobuf.internal import builder as _builder
 
 _sym_db = _symbol_database.Default()
 
-
-
-
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n$bencherscaffold/protos/bencher.proto\"0\n\x05Value\x12\x18\n\x04type\x18\x01 \x01(\x0e\x32\n.ValueType\x12\r\n\x05value\x18\x02 \x01(\x01\"L\n\tBenchmark\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x1c\n\x04type\x18\x02 \x01(\x0e\x32\x0e.BenchmarkType\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"r\n\x10\x42\x65nchmarkRequest\x12\x1d\n\tbenchmark\x18\x01 \x01(\x0b\x32\n.Benchmark\x12\x15\n\x05point\x18\x02 \x01(\x0b\x32\x06.Point\x12\x18\n\x0brandom_seed\x18\x03 \x01(\rH\x00\x88\x01\x01\x42\x0e\n\x0c_random_seed\"\x1f\n\x05Point\x12\x16\n\x06values\x18\x01 \x03(\x0b\x32\x06.Value\"!\n\x10\x45valuationResult\x12\r\n\x05value\x18\x01 \x01(\x01*\x8d\x01\n\rBenchmarkType\x12\x15\n\x11PURELY_CONTINUOUS\x10\x00\x12\x11\n\rPURELY_BINARY\x10\x01\x12\x16\n\x12PURELY_CATEGORICAL\x10\x02\x12\x17\n\x13PURELY_ORDINAL_REAL\x10\x03\x12\x16\n\x12PURELY_ORDINAL_INT\x10\x04\x12\t\n\x05MIXED\x10\x05*E\n\tValueType\x12\x0e\n\nCONTINUOUS\x10\x00\x12\n\n\x06\x42INARY\x10\x01\x12\x0b\n\x07INTEGER\x10\x02\x12\x0f\n\x0b\x43\x41TEGORICAL\x10\x03\x32\x43\n\x07\x42\x65ncher\x12\x38\n\x0e\x65valuate_point\x12\x11.BenchmarkRequest\x1a\x11.EvaluationResult\"\x00\x62\x06proto3')
 
 _globals = globals()
@@ -21,20 +18,26 @@ _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'bencherscaffold.protos.bencher_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
-  _globals['_BENCHMARKTYPE']._serialized_start=353
-  _globals['_BENCHMARKTYPE']._serialized_end=494
-  _globals['_VALUETYPE']._serialized_start=496
-  _globals['_VALUETYPE']._serialized_end=565
+  _globals['_BENCHMARKTYPE']._serialized_start=488
+  _globals['_BENCHMARKTYPE']._serialized_end=629
+  _globals['_VALUETYPE']._serialized_start=631
+  _globals['_VALUETYPE']._serialized_end=700
+  _globals['_CONSTRAINTTYPE']._serialized_start=702
+  _globals['_CONSTRAINTTYPE']._serialized_end=748
   _globals['_VALUE']._serialized_start=40
   _globals['_VALUE']._serialized_end=88
   _globals['_BENCHMARK']._serialized_start=90
   _globals['_BENCHMARK']._serialized_end=166
   _globals['_BENCHMARKREQUEST']._serialized_start=168
-  _globals['_BENCHMARKREQUEST']._serialized_end=282
-  _globals['_POINT']._serialized_start=284
-  _globals['_POINT']._serialized_end=315
-  _globals['_EVALUATIONRESULT']._serialized_start=317
-  _globals['_EVALUATIONRESULT']._serialized_end=350
-  _globals['_BENCHER']._serialized_start=567
-  _globals['_BENCHER']._serialized_end=634
+  _globals['_BENCHMARKREQUEST']._serialized_end=240
+  _globals['_POINT']._serialized_start=242
+  _globals['_POINT']._serialized_end=273
+  _globals['_CONSTRAINT']._serialized_start=275
+  _globals['_CONSTRAINT']._serialized_end=347
+  _globals['_OBJECTIVEVALUE']._serialized_start=349
+  _globals['_OBJECTIVEVALUE']._serialized_end=394
+  _globals['_EVALUATIONRESULT']._serialized_start=396
+  _globals['_EVALUATIONRESULT']._serialized_end=485
+  _globals['_BENCHER']._serialized_start=750
+  _globals['_BENCHER']._serialized_end=817
 # @@protoc_insertion_point(module_scope)

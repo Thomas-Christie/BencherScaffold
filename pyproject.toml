@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "bencherscaffold"
-version = "0.5.2"
+version = "0.6.3"
 description = ""
 authors = [ "Leonard Papenmeier <leonard@papenmeier.io>",]
 readme = "README.md"
@@ -24,7 +24,7 @@ version = "~1.76.0"
 markers = "python_version >= '3.14'"
 
 [[tool.poetry.dependencies.protobuf]]
-version = "~4.25.0,"
+version = "~4.25.0"
 markers = "python_version < '3.14'"
 
 [[tool.poetry.dependencies.protobuf]]
@@ -33,6 +33,7 @@ markers = "python_version >= '3.14'"
 
 [tool.poetry.group.dev.dependencies]
 toml = "^0.10.2"
+pytest-timeout = "~2.4.0"
 [[tool.poetry.group.dev.dependencies.grpcio-tools]]
 version = "~1.62.0"
 markers = "python_version < '3.14'"
@@ -40,4 +41,16 @@ markers = "python_version < '3.14'"
 [[tool.poetry.group.dev.dependencies.grpcio-tools]]
 version = "~1.76.0"
 markers = "python_version >= '3.14'"
+
+[[tool.poetry.group.dev.dependencies.pytest]]
+version = "~8.3.5"
+markers = "python_version < '3.9'"
+
+[[tool.poetry.group.dev.dependencies.pytest]]
+version = "~8.4.2"
+markers = "python_version >= '3.9' and python_version < '3.10'"
+
+[[tool.poetry.group.dev.dependencies.pytest]]
+version = "^9.0"
+markers = "python_version >= '3.10'"
 

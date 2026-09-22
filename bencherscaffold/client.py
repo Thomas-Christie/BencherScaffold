@@ -1,12 +1,12 @@
 import time
-from collections.abc import Sequence
+from typing import Sequence, Optional
 
 import grpc
 
 from bencherscaffold.dual_stack_service import grpc_target
 from bencherscaffold.protoclasses.bencher_pb2 import (
-    BenchmarkRequest, EvaluationResult, Point, Benchmark,
-    BenchmarkType, Value, ValueType,
+    BenchmarkRequest, BenchmarkType,
+    EvaluationResult, Point, Benchmark, Value, ValueType,
 )
 from bencherscaffold.protoclasses.bencher_pb2_grpc import BencherStub
 
@@ -36,9 +36,9 @@ class BencherClient:
     def evaluate_point(
             self,
             benchmark_name: str,
-            point: Sequence[Value],
-            random_seed: int | None = None,
-    ) -> float:
+            point: Sequence[Value]
+            random_seed: Optional[int] = None,
+    ) -> EvaluationResult:
         """
         Evaluates a point in the benchmark space.
         This method sends a request to the server to evaluate a specific point in the benchmark space.
@@ -54,7 +54,10 @@ class BencherClient:
                 non-deterministically.
 
         Returns:
-            The evaluated value of the point in the benchmark space.
+            The full EvaluationResult: one ObjectiveValue per objective the benchmark
+            reports (so multi-objective benchmarks are expressible), plus one
+            Constraint per constraint. A single-objective caller reads
+            ``result.objectives[0].value``.
 
         """
 
@@ -84,7 +87,7 @@ class BencherClient:
         for n_retry in range(self.max_retries):
             try:
                 response: EvaluationResult = self.stub.evaluate_point(request)
-                return response.value
+                return response
             except grpc.RpcError as e:
                 if n_retry < self.max_retries - 1:
                     print(f"Retrying... {n_retry + 1}/{self.max_retries}")
